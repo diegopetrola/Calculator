@@ -1,6 +1,6 @@
 ﻿// OK! Create a functionality that will count the amount of times the calculator was used.
 // Ok! Store a list with the latest calculations. And give the users the ability to delete that list.
-// OK! Allow the users to use the results in the list above to perform new calculations.
+// OK! Allow the users to use the Results in the list above to perform new calculations.
 // OK! Add extra calculations: Square Root, Taking the Power, 10x, Trigonometry functions.
 
 using System.Text.Json;
@@ -17,96 +17,95 @@ namespace CalculatorLibrary
         {
             string jsonString = File.Exists(logPath) ? File.ReadAllText(logPath) : "{}";
             log = JsonSerializer.Deserialize<CalculatorLog>(jsonString) ?? new CalculatorLog();
-            log.openedCount++;
+            log.OpenedCount++;
             WriteLog();
         }
 
         public int getOpenedCount()
         {
-            return log.openedCount;
+            return log.OpenedCount;
         }
 
         public List<Operation> GetHistory()
         {
-            return log.history;
+            return log.History;
         }
 
         void WriteLog()
         {
-            int len = log.history.Count;
+            int len = log.History.Count;
             // Only write the last 5 elements, both to avoid cluttering the screen and logs too large
             if (len > 5)
-                log.history = log.history.GetRange(len - 6, len - 1);
-            Console.WriteLine(JsonSerializer.Serialize(log));
-            Console.WriteLine(log.openedCount);
+                log.History = log.History.GetRange(len - 5, 5);
             File.WriteAllText(logPath, JsonSerializer.Serialize<CalculatorLog>(log));
         }
 
-        public double DoOperation(double num1, double num2, string op)
+        public double DoOperation(Operation operand)
         {
-            Operation operand = new();
-            operand.result = double.NaN;
-            operand.Num1 = num1;
-            operand.Num2 = num2;
-            log.history.Add(operand);
+            operand.Result = double.NaN;
+            log.History.Add(operand);
 
             // Use a switch statement to do the math.
-            switch (op)
+            switch (operand.Operand)
             {
                 case "a":
-                    operand.result = num1 + num2;
+                    operand.Result = operand.Num1 + operand.Num2;
                     operand.Operand = "Add";
                     break;
                 case "s":
-                    operand.result = num1 - num2;
+                    operand.Result = operand.Num1 - operand.Num2;
                     operand.Operand = "Subtract";
                     break;
                 case "m":
-                    operand.result = num1 * num2;
+                    operand.Result = operand.Num1 * operand.Num2;
                     operand.Operand = "Multiply";
                     break;
                 case "d":
                     // Ask the user to enter a non-zero divisor.
-                    if (num2 != 0)
+                    if (operand.Num2 != 0)
                     {
-                        operand.result = num1 / num2;
+                        operand.Result = operand.Num1 / operand.Num2;
                         operand.Operand = "Divide";
                     }
                     else
                     {
-                        log.history.RemoveAt(log.history.Count - 1); // remove from history
+                        log.History.RemoveAt(log.History.Count - 1); // remove from History
                     }
                     break;
                 case "p":
-                    operand.result = Math.Pow(num1, num2);
+                    operand.Result = Math.Pow(operand.Num1, operand.Num2);
+                    if(double.IsNaN( operand.Result))
+                    {
+                        log.History.RemoveAt(log.History.Count - 1);
+                    }
                     operand.Operand = "Power";
                     break;
-                case "q":
-                    if (num1 > 0)
+                case "r":
+                    if (operand.Num1 > 0)
                     {
-                        operand.result = Math.Sqrt(num1);
+                        operand.Result = Math.Sqrt(operand.Num1);
                         operand.Operand = "Square Root";
                     }
                     else
                     {
-                        log.history.RemoveAt(log.history.Count - 1);
+                        log.History.RemoveAt(log.History.Count - 1);
                     }
                     break;
                 case "c":
-                    operand.result = Math.Cos(num1);
-                    operand.Operand = "Consine";
+                    operand.Result = Math.Cos(operand.Num1);
+                    operand.Operand = "Cosine";
                     break;
                 case "i":
-                    operand.result = Math.Sin(num1);
-                    operand.Operand = "Consine";
+                    operand.Result = Math.Sin(operand.Num1);
+                    operand.Operand = "Sine";
                     break;
                 // Return text for an incorrect option entry.
                 default:
-                    break;
+                    throw new Exception("Invalid Operation.");
             }
             WriteLog();
 
-            return operand.result;
+            return operand.Result;
         }
     }
     public class Operation
@@ -114,11 +113,11 @@ namespace CalculatorLibrary
         public double Num1 { get; set; }
         public double Num2 { get; set; }
         public string? Operand { get; set; }
-        public double result { get; set; }
+        public double Result { get; set; }
     }
     public class CalculatorLog
     {
-        public int openedCount { get; set; }
-        public List<Operation> history { get; set; } = [];
+        public int OpenedCount { get; set; }
+        public List<Operation> History { get; set; } = [];
     }
 }
